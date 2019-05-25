@@ -1,81 +1,114 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <ctime>
-#include <vector>
-#include <cstring>
-#include <algorithm>
-#include "movies.h"
-// #include "utility.h"
+#include "cards.h"
 
 using namespace std;
 
-bool parseLine(string &line, string &movieName, double &movieRating);
+void endGame(Player *p1, CardList &a, Player *p2, CardList &b);
 
-int main(int argc, char** argv){
-  if(argc < 4){
-    cerr << "Usage: " << argv[ 0 ] << "arg1 arg2 arg3" << endl;
-    exit(1);
+int main(int argv, char** argc){
+  if(argv != 3){
+    cout << "Please provide 2 file names" << endl;
+    return 1;
   }
 
-  bool flag = false;
-  if(strcmp(argv[1], "true") == 0){
-    flag = true;
-  } else if(strcmp(argv[1], "false") == 0) {
-    flag = false;
-  } else {
-    cerr << "Argument 1 must be a boolean (true/false)" << endl;
-    exit(1);
+  ifstream cardFile1 (argc[1]);
+  ifstream cardFile2 (argc[2]);
+  string line;
+
+  if (cardFile1.fail()){
+    cout << "Could not open file " << argc[1];
+    return 1;
   }
 
-  ifstream movieFile (argv[2]);
-  string line, movieName;
-  double movieRating;
-
-  if (movieFile.fail()){
-    cerr << "Could not open file " << argv[2];
-    exit(1);
+  if (cardFile2.fail()){
+    cout << "Could not open file " << argc[2];
+    return 1;
   }
 
-  // Create an objects of the BST class you defined
-  // to contain the name and rating in the input file
-  CollectionBST *collection = new CollectionBST();
-  // Read each file and store the name and rating
-  while (getline(movieFile, line) && parseLine(line, movieName, movieRating)){
-    // Use std::string movieName and double movieRating
-    // to construct your Movie objects
-    collection->insertMovie(movieName, movieRating);
-    // cout << movieName << " has rating " << movieRating << endl;
+  // Create two objects of the class you defined
+  // to contain two sets of cards in two input files
+  CardList cardList1;
+  CardList cardList2;
+  bool player1turn = true;
+  bool player2turn = false;
+  // Read each file and store cards
+  while (getline (cardFile1, line) && (line.length() > 0)){
+    cardList1.addCard(line);
   }
-  movieFile.close();
+  cardFile1.close();
 
-  if(flag){
-    collection->printPreOrder();
-    string prefix = argv[3];
-    Movie* bestMovie = collection->searchForMaxPrefix(prefix);
-    cout<<"Best movie is "<<bestMovie->getTitle()<<" with rating "<<bestMovie->getRating()<<endl;
-    return 0;
+  while (getline (cardFile2, line) && (line.length() > 0)){
+    cardList2.addCard(line);
+  }
+  cardFile2.close();
+
+  cardList1.setCurrent();
+  cardList2.setCurrent();
+
+  Player *player1 = new Player("Alice", cardList1);
+  Player *player2 = new Player("Bob", cardList2);
+  Card *player1Card, *player2Card;
+
+  while(cardList1.getCurrent() && cardList2.getCurrent()){
+    while(player1turn){
+      player1Card = cardList1.getCurrent();
+      if(cardList2.search(*player1Card)){
+        cout<<player1->getName()<<" picked matching card ";
+        player1Card->printCard();
+        if(cardList1.moveCurrentUp() == false){
+          cardList1.removeCard(*player1Card);
+          cardList2.removeCard(*player1Card);
+          endGame(player1, cardList1, player2, cardList2);
+          return 0;
+        }
+        cardList1.removeCard(*player1Card);
+        cardList2.removeCard(*player1Card);
+        player1turn = false;
+        player2turn = true;
+      }
+      else{
+          cardList1.moveCurrentUp();
+      }
+    }
+    if(cardList1.getCurrent() == nullptr){
+      player1turn = false;
+      player2turn = false;
+    }
+    player1turn = false;
+    player2turn = true;
+    while(player2turn){
+      player2Card = cardList2.getCurrent();
+      if(cardList1.search(*player2Card)){
+        cout<<player2->getName()<<" picked matching card ";
+        player2Card->printCard();
+        if(cardList2.moveCurrentUp() == false){
+          cardList1.removeCard(*player2Card);
+          cardList2.removeCard(*player2Card);
+          endGame(player1, cardList1, player2, cardList2);
+          return 0;
+        }
+        cardList1.removeCard(*player2Card);
+        cardList2.removeCard(*player2Card);
+        player1turn = true;
+        player2turn = false;
+      }
+      else{
+        cardList2.moveCurrentUp();
+      }
+    }
+    player1turn = true;
+    player2turn = false;
   }
   return 0;
 }
 
-bool parseLine(string &line, string &movieName, double &movieRating) {
-  if(line.length() <= 0) return false;
-  string tempRating = "";
+void endGame(Player *p1, CardList &a, Player *p2, CardList &b){
+  cout<<endl<<p1->getName()<<"'s cards:"<<endl;
+  cout<<a;
+  cout<<endl;
 
-  bool flag = false;
-  movieName = tempRating = "", movieRating = 0.0, flag = false;
-
-  for (int i = 0; i < line.length(); i++){
-    if(flag) tempRating += line[i];
-    else if(line[i]==','&& line[0]!='"') flag = true;
-    else {
-      if(i==0 && line[0]=='"') continue;
-      if(line[i]=='"'){ i++; flag=true; continue;}
-      movieName += line[i];
-    }
-  }
-
-  movieRating = stod(tempRating);
-  return true;
+  cout<<p2->getName()<<"'s cards:"<<endl;
+  cout<<b;
 }

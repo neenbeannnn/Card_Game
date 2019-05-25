@@ -1,16 +1,17 @@
-movies: main.o movies.o
-	g++ main.o movies.o -o movies
-#utility.o
-tests: tests.o movies.o
-	g++ tests.o movies.o -o tests
-	./tests
-movies.o: movies.cpp
-	g++ movies.cpp -c
-tests.o: tests.cpp
-	g++ tests.cpp -c
-#utility.o: utility.cpp
-	#g++ utility.cpp -c
+testcards: testcards.o cards.o
+	g++ testcards.o cards.o -o testcards
+
+game: main.o cards.o
+	g++ main.o cards.o -o game
+
 main.o: main.cpp
 	g++ main.cpp -c
+
+cards.o: cards.cpp
+	g++ cards.cpp -c
+
+testcards.o: testcards.cpp
+	g++ testcards.cpp -c
+
 clean:
-	rm *.o movies tests
+	rm *.o *.txt a.out testcards game 
