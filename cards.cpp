@@ -1,5 +1,4 @@
 //cards.cpp
-//Authors: Nina Huang
 //Implementation of the classes defined in cards.h
 #include <iostream>
 #include "cards.h"
